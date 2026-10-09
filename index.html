@@ -112,7 +112,8 @@ const LV=[
  tr:[["Kenji, Rivale del Drago","Kenji: «Questa è la mia lama finale: l'odachi. Mostrami il tuo valore!»"],["Accolito d'Ombra","Accolito: «L'ombra ti conosce già.»"],["Sacerdotessa di Luce","Sacerdotessa: «La luce non ammette ombre.»"],["Monaco dell'Alba","Monaco: «La luce guarisce... e acceca.»"],["Cultista dell'Eclisse","Cultista: «Quando il sole muore, io rinasco.»"],["Comandante Eclisse","Eclisse: «Luce e buio... io li uso entrambi.»"],["Re del Dominio","«Luce e Oscurità si contendono il trono. Un solo Re ti attende.»"]]}];
 const lvIntro=()=>"Livello "+(lv+1)+" – "+LV[lv].n+". "+LV[lv].d+" Sconfiggi i 7 allenatori: il primo è sempre Kenji, il Rivale con il Bond Drago. I falò ti curano, l'erba alta nasconde creature. Legame massimo in questo regno: Lv."+[3,6,9][lv]+".";
 function setLevel(l){lv=l;const L=LV[l];genMap((S.seed*7919+l*104729)>>>0);TR=TR0.map((o,i)=>({...o,x:PTS[i].x,y:PTS[i].y,n:L.tr[i][0],t:L.tr[i][1],hp:Math.round(o.hp*(1+.4*l)),at:Math.round(o.at*(1+.25*l))}));WILD=L.wild.map((n,i)=>[n,"rbow"[i]]);ZN.forEach((z,i)=>{z[4]=L.zn[i];z[6]="rgba(0,0,0,0)"});WT.length=0;FT.length=0;MC=null;S.st=0;px=SX;py=SY;fol={x:SX,y:SY};mvg=null;held.length=0;S.ex=new Uint8Array(MW*MH);reveal()}
-function onDeath(){const nu=LUN[lv].filter(k=>!UNL[k]);LUN[lv].forEach(k=>UNL[k]=1);saveU();busy=0;title();clr();say("💀 La run finisce nel livello "+(lv+1)+" ("+LV[lv].n+"). "+(nu.length?"Sbloccati: "+nu.join(", ")+"!":"Nessun nuovo tipo da sbloccare."))}
+function unlockLv(){const nu=LUN[lv].filter(k=>!UNL[k]);LUN[lv].forEach(k=>UNL[k]=1);saveU();return nu}
+function onDeath(){busy=0;title();clr();say("💀 La run finisce nel livello "+(lv+1)+" ("+LV[lv].n+"). Completa il livello per sbloccare nuovi Bond!")}
 function bake(g,cv){const W=cv.width,H=cv.height;g.globalCompositeOperation="color";g.fillStyle=LV[lv].tint;g.fillRect(0,0,W,H);g.globalCompositeOperation="source-over";
  if(lv==0)for(let i=0;i<160;i++){const X=rnd(i)*W,Y=rnd(i+400)*H,q=4+rnd(i+9)*9;g.fillStyle=i%3?"#bfe8ff":"#fff";g.beginPath();g.moveTo(X,Y-q*1.6);g.lineTo(X+q*.6,Y);g.lineTo(X,Y+q*.6);g.lineTo(X-q*.6,Y);g.fill()}
  if(lv==1){g.lineWidth=2;g.strokeStyle="#ffd54a";for(let i=0;i<70;i++){let X=rnd(i)*W,Y=rnd(i+500)*H;g.beginPath();g.moveTo(X,Y);for(let k=0;k<4;k++)g.lineTo(X+=(rnd(i*9+k)-.5)*26,Y+=8+rnd(i*7+k)*10);g.stroke()}}
@@ -159,7 +160,7 @@ function act(k){if(busy)return;busy=1;S.gd=0;$("cmd").innerHTML="";
  S.en=big?0:Math.min(3,S.en+1);
  if(big){say("💥 Bond attivato: "+ARN[S.sp.ev[0][0]]+"!");tw("aura",0,1,600,()=>{A.arm=1;tw("sa",1,0,400);tw("flash",1,0,500);setTimeout(()=>{A.proj={c:elc(),f:PP,t:EP};tw("pp",0,1,260,()=>{A.proj=null;E.hp=Math.max(0,E.hp-d);say(d+" danni!");hitE(d,1);setTimeout(()=>{A.arm=0;A.aura=0;tw("sa",0,1,400);tw("flash",1,0,400);after()},800)})},650)})}
  else tw("px",0,150,160,()=>{E.hp=Math.max(0,E.hp-d);say(`Colpo! ${d} danni.`);hitE(d,0);tw("px",150,0,220,()=>setTimeout(after,250))})}
-function enemyTurn(){const bd=E.tr>=0&&E.en>=3;let d=r(E.at*(S.gd?.4:1)*(bd?2.2:1));E.bt=(E.bt||0)+1;if(E.bs=="U"&&E.bt%3==0){d=Math.round(d*1.8);say("🌑 Eclissi Totale!")}if(E.bs=="L"){const h=Math.round(E.mhp*.06);E.hp=Math.min(E.mhp,E.hp+h);say("☀️ Il Re della Luce si rigenera (+"+h+").")}const st=E.sty||"lunge";
+function enemyTurn(){const bd=E.tr>=0&&E.en>=3;let d=r(E.at*(S.gd?.4:1)*(bd?2.2:1));E.bt=(E.bt||0)+1;if(E.bs=="U"&&E.bt%3==0){d=Math.round(d*1.8);say("🌑 Eclissi Totale!")}const st=E.sty||"lunge";
  const done=()=>{say(`${E.n} ${bd?"scatena il Bond":"attacca"}: ${d} danni.`);S.hp=Math.max(0,S.hp-d);hitP(d,bd?EC[E.k]:0);if(E.tr>=0)E.en=bd?0:Math.min(3,E.en+1);
   if(S.hp<=0)tw("pdie",0,1,700,onDeath);
   else setTimeout(()=>{busy=0;cmds()},bd?1400:550)};
@@ -171,11 +172,11 @@ function win(){const b=S.bond;say(`${E.n} è sconfitto!`);if(S.bond<bondCap())S.
  if(S.bond>=bondCap()){S.xp=0;if(b<bondCap())say("🔒 Legame al massimo per questo regno (Lv."+bondCap()+"). Il prossimo regno alzerà il limite.")}
  checkSpiritTrophyUnlock();
  S.hp=Math.min(maxhp(),S.hp+15);S.pot=Math.min(4,S.pot+1);mode="map";$("cmd").innerHTML="";
- if(E.tr>=0){S.st=E.tr+1;if(S.st>=TR.length){if(lv<2){checkAreaTrophyUnlock();say("🌀 Area completata! Si apre il passaggio verso "+LV[lv+1].n+".");setLevel(lv+1);S.hp=maxhp();S.pot=Math.max(S.pot,3);say(lvIntro())}else{checkAreaTrophyUnlock();mode="end";say("🏆 "+E.n+" è sconfitto! Hai attraversato i tre domini. Sei il Campione del Legame!");$("cmd").innerHTML='<button onclick="title()">🔁 Nuova partita: scegli il tuo spirito</button>'}}}render()}
+ if(E.tr>=0){S.st=E.tr+1;if(S.st>=TR.length){if(lv<2){const nu=unlockLv();checkAreaTrophyUnlock();say("🌀 Area completata! Si apre il passaggio verso "+LV[lv+1].n+".");if(nu.length)say("🔓 Nuovi Bond sbloccati: "+nu.join(", ")+"!");setLevel(lv+1);S.hp=maxhp();S.pot=Math.max(S.pot,3);say(lvIntro())}else{const nu=unlockLv();checkAreaTrophyUnlock();mode="end";say("🏆 "+E.n+" è sconfitto! Hai attraversato i tre domini. Sei il Campione del Legame!");if(nu.length)say("🔓 Nuovi Bond sbloccati: "+nu.join(", ")+"!");$("cmd").innerHTML='<button onclick="title()">🔁 Nuova partita: scegli il tuo spirito</button>'}}}render()}
 function bar(X,Y,w,v,m,col){x.fillStyle="#0006";x.fillRect(X,Y,w,10);x.fillStyle=col;x.fillRect(X,Y,w*Math.max(0,v/m),10)}
 function em(t,X,Y,s){x.font=s+"px serif";x.textAlign="center";x.textBaseline="middle";x.fillText(t,X,Y)}
 function render(){x.clearRect(0,0,640,448);if(mode=="end"){drawEnd();return}
- if(mode=="title"){x.fillStyle="#111";x.fillRect(0,0,640,448);x.fillStyle="#fff";x.font="bold 54px system-ui";x.textAlign="center";x.fillText("BOND BLACK",320,190);x.font="20px system-ui";x.fillText("Fondi la tua anima con la creatura. Forgia l'Armatura Bond.",320,240);drawTrophies();x.font="bold 13px system-ui";Object.keys(SP).forEach((k,i)=>{x.globalAlpha=UNL[k]?1:.22;x.drawImage(crt(k,1,0),8+i*78,320,74,74);x.globalAlpha=1;x.fillText(UNL[k]?k:"🔒 ???",45+i*78,436)});x.font="12px system-ui";x.fillText("Muori (o completa) un livello per sbloccare: Ghiaccio (Liv.1), Elettrico (Liv.2), Luce e Oscurità (Liv.3).",320,410);return}
+ if(mode=="title"){x.fillStyle="#111";x.fillRect(0,0,640,448);x.fillStyle="#fff";x.font="bold 54px system-ui";x.textAlign="center";x.fillText("BOND BLACK",320,190);x.font="20px system-ui";x.fillText("Fondi la tua anima con la creatura. Forgia l'Armatura Bond.",320,240);drawTrophies();x.font="bold 13px system-ui";Object.keys(SP).forEach((k,i)=>{x.globalAlpha=UNL[k]?1:.22;x.drawImage(crt(k,1,0),8+i*78,320,74,74);x.globalAlpha=1;x.fillText(UNL[k]?k:"🔒 ???",45+i*78,436)});x.font="12px system-ui";x.fillText("Completa un livello per sbloccare: Ghiaccio (Liv.1), Elettrico (Liv.2), Luce e Oscurità (Liv.3).",320,410);return}
  if(mode=="battle"){const n=performance.now(),e=A.enter,sk=(Math.random()-.5)*A.sk,bl=f=>f>0&&Math.floor(n/60)%2?.25:1,bob=Math.sin(n/300)*2,GY=384,w3=Math.floor(n/170)%3,fr=A.px>5&&A.px<145?(Math.floor(n/70)%2?1:2):0,f3=A.ex<-5&&A.ex>-145?(Math.floor(n/70)%2?1:2):0,PK=S.sp.ev[0][0],SZ=[130,155,180];
   bgDraw(n);const dim=Math.max(A.aura,A.eaura);if(dim>0){x.fillStyle="rgba(10,0,30,"+dim*.45+")";x.fillRect(0,0,640,448)}
   x.fillStyle="#0007";x.beginPath();x.ellipse(PP[0]+A.px*.6,GY+3,58,9,0,0,7);x.ellipse(EP[0]+A.ex*.6,GY+3,58,9,0,0,7);x.fill();
@@ -339,7 +340,7 @@ function crt(k,st,f){const id=k+st+f;if(CS[id])return CS[id];const P=CP[k],cv=do
   S(P.l,[[hx+hr*.3,hy+hr*.2],[hx+hr+sn*.8,hy+hr*.25],[hx+hr*.2,hy+hr*.85]]);R("#111",hx+hr+sn-2.5,hy-hr*.05,3,3);Ln(P.d,[[hx+hr*.3,hy+hr*.55],[hx+hr+sn*.7,hy+hr*.4]],1);Pl("#fff",[[hx+hr*.6,hy+hr*.5],[hx+hr*.75,hy+hr*.8],[hx+hr*.9,hy+hr*.5]]);eye(hx,hy,hr,o.ec||P.e)};
  {const sc=[1,.9,.76][st];g.translate(48,80);g.scale(sc,sc);g.translate(-48,-80)}
  const GQ=[[38,62,15,9,58,52,8,6,3.2],[36,56,21,13,62,40,10,9,4.6],[33,50,25,16,66,27,12,11,6]][st],[bx,by,brx,bry,hx,hy,hr,sn,lw]=GQ,B={bx,by,brx,bry,hx,hy,hr,sn,lw};
- if(k=="Pyrix"||k=="Drago"){const ts=[.9,1.1,1.4][st];
+ if(k=="Pyrix"){const ts=[.9,1.1,1.4][st];
   if(st>=2){GW("#ff6a20",14,()=>{S(P.d,[[bx+4,by-bry],[bx-18,by-bry-34+wv],[bx-6,by-bry-20],[bx-4,by-bry-48+wv*1.5],[bx+10,by-bry-24],[bx+22,by-bry-46+wv],[bx+28,by-bry-18],[bx+38,by-bry-30+wv],[bx+40,by-bry+2]])});S(P.a,[[bx+8,by-bry-2],[bx-4,by-bry-26+wv],[bx+4,by-bry-14],[bx+8,by-bry-34+wv],[bx+16,by-bry-16],[bx+26,by-bry-28+wv],[bx+32,by-bry-4]])}
   fm(bx-brx+2+wv,by-3,ts,P.d,P.a,"#fff4b8");fm(bx-brx-7-wv,by+3,ts*.8,P.d,P.a,"#fff4b8");if(st>=2)fm(bx-brx-14+wv,by+6,ts*.6,P.d,P.a,"#fff4b8");
   beast(B);
@@ -347,8 +348,48 @@ function crt(k,st,f){const id=k+st+f;if(CS[id])return CS[id];const P=CP[k],cv=do
   for(let i=0;i<3+st;i++)Pl(P.d,[[bx-brx*.55+i*8,by-bry*.8],[bx-brx*.55+i*8+3,by+bry*.2],[bx-brx*.55+i*8+7,by-bry*.8]]);
   if(st>=1){fm(hx-hr*1.1,hy-hr*.1,.8,P.d,P.a,"#fff4b8");fm(hx-hr-5,hy+hr*.5,.6,P.d,P.a,"#fff4b8");GW(P.a,8,()=>{Ln(P.a,[[bx-6,by],[bx,by-bry*.4],[bx+8,by+2]],1.8)})}
   if(st>=2){S(P.l,[[hx-2,hy-hr*.8],[hx-12,hy-hr-28],[hx+3,hy-hr*.9]]);S(P.l,[[hx+6,hy-hr*.8],[hx+5,hy-hr-33],[hx+12,hy-hr*.5]]);GW("#ffcc40",16,()=>E("#fff4b8",bx+brx*.3,by+3,5,5));Ln(P.d,[[hx+hr*.5,hy+hr*.6],[hx+hr+sn,hy+hr*.5]],2)}}
- if(k=="Drago"){GW(P.a,8,()=>{S(P.a,[[hx-hr*.5,hy-hr*.8],[hx-hr*1.25,hy-hr-12-st*3],[hx-hr*.2,hy-hr-8],[hx+hr*.5,hy-hr-14-st*3],[hx+hr*.4,hy-hr*.7]])});
-  }
+ if(k=="Drago"){g.save();g.translate(5,0);
+  const D=[[40,60,14,10,57,45,9,6,3.6,.7],[38,55,18,12,60,35,9,7,4.4,.95],[35,52,22,14,63,23,10,8,5.4,1.15]][st],[bx,by,brx,bry,hx,hy,hr,sn,lw,ws]=D,y0=by+bry*.6,CY="#6ae0ff",PK="#ff9ae0",
+  star=(X,Y,r,c)=>GW(c,8,()=>Pl(c,[[X,Y-r],[X+r*.3,Y-r*.3],[X+r,Y],[X+r*.3,Y+r*.3],[X,Y+r],[X-r*.3,Y+r*.3],[X-r,Y],[X-r*.3,Y-r*.3]])),
+  lerp=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k],
+  dleg=(x0,sw,c,w)=>{Ln(c,[[x0,y0],[x0+sw*.3,(y0+77)/2],[x0+sw,75]],w);E(c,x0+sw+2.5,77.5,w*.8+1.5,3.2);for(let i=0;i<3;i++)Pl("#fff4b8",[[x0+sw+2+i*2.4,77],[x0+sw+3.2+i*2.4,80],[x0+sw+4.4+i*2.4,77]])},
+  wing=(sx,sy,s,c1,fo,far)=>{const wr=[sx-7*s,sy-24*s+fo*.6],t1=[sx-34*s,sy-26*s+fo*1.6],t2=[sx-35*s,sy-6*s+fo*1.1],t3=[sx-22*s,sy+8*s+fo*.5],S0=[sx,sy],
+   s1=lerp(lerp(t1,t2,.5),S0,.3),s2=lerp(lerp(t2,t3,.5),S0,.3),pts=[S0,wr,t1,s1,t2,s2,t3,[sx-10*s,sy+6*s]];
+   Pl(c1,pts);g.globalAlpha=far?.2:.55;Pl(far?P.d:"#9a70ff",[lerp(S0,wr,.2),lerp(wr,t1,.12),lerp(t1,s1,.45),lerp(s1,t2,.5),lerp(t2,s2,.45),lerp(s2,t3,.5),lerp(t3,S0,.5)]);g.globalAlpha=1;
+   const bw=far?1:1.1;Ln(P.a,[S0,wr,t1],bw);Ln(P.a,[wr,t2],bw*.8);Ln(P.a,[wr,t3],bw*.8);
+   if(!far){for(const[u,v,c]of[[.25,.3,"#fff"],[.45,.18,CY],[.3,.5,PK],[.6,.4,"#fff"],[.5,.6,CY],[.2,.15,"#ffd84a"]]){const X=sx+(t1[0]-sx)*u+(t3[0]-sx)*v,Y=sy+(t1[1]-sy)*u+(t3[1]-sy)*v;R(c,X,Y,1,1)}
+    if(st>=1)for(const[X,Y]of[t1,t2])star(X,Y,2+st*.5,"#fff")}},
+  tl=(a,L)=>{const N=9,pts=[];for(let i=0;i<=N;i++){const t=i/N;pts.push([bx-brx*.7-t*L,a+(72-a)*Math.min(1,t*1.6)-Math.pow(t,3)*(10+st*5)+Math.sin(t*5+wv*.4)*2.5*t])}return pts};
+  const a0=by+bry*.2,TP=tl(a0,[20,24,32][st]);
+  dleg(bx-brx*.55-ls*.5,-ls,P.d,lw);dleg(bx+brx*.5+ls*.5,ls,P.d,lw*.95);
+  for(let i=0;i<TP.length-1;i++){const w=lw*1.9*(1-i/TP.length)+1.6;Ln(P.d,[[TP[i][0],TP[i][1]+1],[TP[i+1][0],TP[i+1][1]+1]],w+1);Ln(P.b,[TP[i],TP[i+1]],w)}
+  for(let i=1;i<6;i++){const q=TP[i],w=lw*1.9*(1-i/TP.length)+1.6;Pl(P.a,[[q[0]-2,q[1]-w*.5],[q[0]+1,q[1]-w*.5-3-st],[q[0]+3,q[1]-w*.5]])}
+  {const q=TP[TP.length-1];if(st==0)Pl(P.a,[[q[0],q[1]],[q[0]-6,q[1]-4],[q[0]-5,q[1]+2]]);else{star(q[0]-2,q[1]-1,4+st*1.5,P.a);star(q[0]-2,q[1]-1,2+st*.5,"#fff")}}
+  wing(bx+brx*.35,by-bry*.7,ws,P.d,wv*1.6,1);
+  S(P.b,[[bx-brx,by+2],[bx-brx*.75,by-bry*.95],[bx+brx*.1,by-bry*1.1],[bx+brx*.75,by-bry*.75],[bx+brx*1.02,by],[bx+brx*.8,by+bry*.8],[bx,by+bry],[bx-brx*.8,by+bry*.75]]);
+  g.globalAlpha=.4;E(PK,bx-brx*.25,by-bry*.25,brx*.5,bry*.4);E(CY,bx+brx*.25,by-bry*.1,brx*.35,bry*.3);g.globalAlpha=1;
+  S(P.l,[[bx-brx*.5,by+bry*.5],[bx+brx*.4,by+bry*.35],[bx+brx*.88,by+bry*.5],[bx+brx*.4,by+bry*.95],[bx-brx*.3,by+bry*.9]]);
+  for(let i=0;i<3+st;i++){const X=bx-brx*.4+i*brx*.28;Ln("#b890f0",[[X,by+bry*.45],[X-1,by+bry*.9]],.9)}
+  for(const[u,v]of[[-.6,-.3],[-.2,-.55],[.2,-.3],[.55,-.5],[-.4,.1],[.05,.05],[.6,0],[-.75,.3]])R(u*v>0?CY:"#fff",bx+u*brx,by+v*bry,1,1);
+  dleg(bx-brx*.45+ls*.5,ls,P.b,lw*1.1);dleg(bx+brx*.6-ls*.5,-ls,P.b,lw);
+  for(let i=0;i<3+st;i++){const X=bx-brx*.5+i*(brx*1.2/(2+st)),Y=by-bry*.95-(i==1||i==2?1:0);Pl(P.a,[[X-2,Y+1],[X+1,Y-4-st*1.5],[X+4,Y+1]])}
+  const p0=[bx+brx*.6,by-bry*.1],p1=[bx+brx*.55+(hx-bx-brx*.55)*.4,(by+hy)/2+2],p2=[hx-hr*.3,hy+hr*.3];
+  Ln(P.b,[p0,p1,p2],hr*1.25);Ln(P.l,[[p0[0]+3,p0[1]+4],[p1[0]+hr*.45,p1[1]+hr*.35],[p2[0]+hr*.4,p2[1]+hr*.5]],hr*.45);
+  for(let i=1;i<=2+st;i++){const q=lerp(p0,p2,i/(3+st));Pl(P.a,[[q[0]-hr*.7-2,q[1]-hr*.3],[q[0]-hr*.7+1,q[1]-hr*.3-4-st],[q[0]-hr*.7+4,q[1]-hr*.2]])}
+  S(P.b,[[hx-hr,hy],[hx-hr*.5,hy-hr*.9],[hx+hr*.4,hy-hr*.85],[hx+hr+sn*.7,hy-hr*.3],[hx+hr+sn,hy+hr*.1],[hx+hr+sn*.9,hy+hr*.4],[hx+hr*.3,hy+hr*.85],[hx-hr*.6,hy+hr*.7]]);
+  S(P.l,[[hx+hr*.2,hy+hr*.25],[hx+hr+sn*.85,hy+hr*.3],[hx+hr+sn*.5,hy+hr*.75],[hx+hr*.1,hy+hr*.85]]);
+  Ln(P.d,[[hx+hr*.3,hy+hr*.3],[hx+hr+sn*.85,hy+hr*.28]],1);
+  for(let i=0;i<2;i++)Pl("#fff",[[hx+hr*.5+i*hr*.5,hy+hr*.3],[hx+hr*.62+i*hr*.5,hy+hr*.7],[hx+hr*.76+i*hr*.5,hy+hr*.3]]);
+  R(P.d,hx+hr+sn-3,hy-hr*.15,2,2);
+  Pl(P.a,[[hx-hr*.3,hy-hr*.7],[hx-hr*1.7-st*3,hy-hr*1.5-st*4],[hx+hr*.1,hy-hr*.95]]);Pl(P.a,[[hx+hr*.1,hy-hr*.8],[hx-hr*1.0-st*2,hy-hr*1.9-st*4],[hx+hr*.5,hy-hr*.85]]);
+  Pl(P.d,[[hx-hr*.7,hy+hr*.1],[hx-hr-5-st*2,hy+hr*.5],[hx-hr*.5,hy+hr*.6]]);
+  eye(hx,hy-hr*.05,hr,P.e);
+  if(st>=1)star(hx+hr*.05,hy-hr*.62,2+st*.5,"#fff");
+  wing(bx+brx*.1,by-bry*.8,ws,"#4a28b0",wv*2.2,0);
+  if(st>=2){for(const[X,Y,c]of[[hx-hr*.3,hy-hr-4,P.a],[hx-hr*.9,hy-hr-2,P.a]])Pl(c,[[X-1.5,Y+4],[X,Y-6],[X+2,Y+4]]);
+   GW("#9ad8ff",14,()=>E("#fff",bx+brx*.3,by+3,3.6,3.6));
+   for(const[X,Y,r]of[[8,22,2.5],[88,12,2],[84,52,2],[14,56,1.8],[50,6,2.2]])star(X,Y+wv*.6,r,Math.abs(X)%2?"#fff":CY)}
+  else if(st==1)for(const[X,Y]of[[10,34],[86,22]])star(X,Y+wv*.5,1.8,"#fff");g.restore()}
  if(k=="Voltix"){const z=[.9,1.1,1.4][st],bolt=(x0,y0,s,c)=>GW("#7ad8ff",8,()=>Pl(c,[[x0,y0],[x0+7*s,y0-12*s],[x0+2*s,y0-12*s],[x0+10*s,y0-27*s],[x0-5*s,y0-11*s],[x0,y0-11*s]]));
   bolt(bx-brx+3,by,z,P.d);bolt(bx-brx-5+wv,by-11*z,z,P.b);if(st>=1)bolt(bx-brx-11-wv,by-23*z,z,P.l);
   if(st>=2)GW("#7ad8ff",12,()=>{for(let i=0;i<6;i++)Pl(P.l,[[bx-brx*.7+i*9,by-bry*.8],[bx-brx*.7+i*9+4,by-bry-17],[bx-brx*.7+i*9+9,by-bry*.8]])});
