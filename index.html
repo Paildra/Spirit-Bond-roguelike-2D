@@ -110,7 +110,7 @@ const LV=[
  zn:["Trono Duale","Rovine d'Ombra","Corte della Luce","Ponte dei Contrasti","Sala delle Eclissi","Soglia del Dominio"],
  wild:["Slime d'Ombra","Spettro Lunare","Orco del Crepuscolo","Occhio Radioso"],
  tr:[["Kenji, Rivale del Drago","Kenji: «Questa è la mia lama finale: l'odachi. Mostrami il tuo valore!»"],["Accolito d'Ombra","Accolito: «L'ombra ti conosce già.»"],["Sacerdotessa di Luce","Sacerdotessa: «La luce non ammette ombre.»"],["Monaco dell'Alba","Monaco: «La luce guarisce... e acceca.»"],["Cultista dell'Eclisse","Cultista: «Quando il sole muore, io rinasco.»"],["Comandante Eclisse","Eclisse: «Luce e buio... io li uso entrambi.»"],["Re del Dominio","«Luce e Oscurità si contendono il trono. Un solo Re ti attende.»"]]}];
-const lvIntro=()=>"Livello "+(lv+1)+" – "+LV[lv].n+". "+LV[lv].d+" Sconfiggi i 7 allenatori: il primo è sempre Kenji, il Rivale con il Bond Drago. I falò ti curano, l'erba alta nasconde creature.";
+const lvIntro=()=>"Livello "+(lv+1)+" – "+LV[lv].n+". "+LV[lv].d+" Sconfiggi i 7 allenatori: il primo è sempre Kenji, il Rivale con il Bond Drago. I falò ti curano, l'erba alta nasconde creature. Legame massimo in questo regno: Lv."+[3,6,9][lv]+".";
 function setLevel(l){lv=l;const L=LV[l];genMap((S.seed*7919+l*104729)>>>0);TR=TR0.map((o,i)=>({...o,x:PTS[i].x,y:PTS[i].y,n:L.tr[i][0],t:L.tr[i][1],hp:Math.round(o.hp*(1+.4*l)),at:Math.round(o.at*(1+.25*l))}));WILD=L.wild.map((n,i)=>[n,"rbow"[i]]);ZN.forEach((z,i)=>{z[4]=L.zn[i];z[6]="rgba(0,0,0,0)"});WT.length=0;FT.length=0;MC=null;S.st=0;px=SX;py=SY;fol={x:SX,y:SY};mvg=null;held.length=0;S.ex=new Uint8Array(MW*MH);reveal()}
 function onDeath(){const nu=LUN[lv].filter(k=>!UNL[k]);LUN[lv].forEach(k=>UNL[k]=1);saveU();busy=0;title();clr();say("💀 La run finisce nel livello "+(lv+1)+" ("+LV[lv].n+"). "+(nu.length?"Sbloccati: "+nu.join(", ")+"!":"Nessun nuovo tipo da sbloccare."))}
 function bake(g,cv){const W=cv.width,H=cv.height;g.globalCompositeOperation="color";g.fillStyle=LV[lv].tint;g.fillRect(0,0,W,H);g.globalCompositeOperation="source-over";
@@ -123,7 +123,7 @@ function lvFx(n,bt){if(bt){x.globalCompositeOperation="color";x.fillStyle=LV[lv]
  if(lv==2){const g=x.createLinearGradient(0,0,640,0);g.addColorStop(0,"rgba(255,244,180,.25)");g.addColorStop(.5,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(10,0,40,.45)");x.fillStyle=g;x.fillRect(0,0,640,448);for(let i=0;i<24;i++){x.fillStyle=i%2?"rgba(255,240,160,.7)":"rgba(170,90,255,.7)";x.fillRect(rnd(i)*640+Math.sin(n/700+i)*30,448-((n/26+rnd(i+3)*448)%448),2,2)}}}
 let S,E,mode="title",px=7,py=29,busy=0;
 const evo=()=>{let v=S.sp.ev[0];for(const k of S.sp.ev)if(S.bond>=k[2])v=k;return v};
-const maxhp=()=>S.sp.hp+S.bond*7,atk=()=>S.sp.at+S.bond*1.4,r=n=>Math.round(n*(.85+Math.random()*.3));
+const maxhp=()=>S.sp.hp+S.bond*7,atk=()=>S.sp.at+S.bond*1.4,r=n=>Math.round(n*(.85+Math.random()*.3)),bondCap=()=>[3,6,9][lv],xpNeed=()=>Math.round(4+S.bond*1.3);
 function say(t){$("msg").innerHTML+=(($("msg").innerHTML)?"<br>":"")+t;$("msg").scrollTop=1e5}
 function clr(){$("msg").innerHTML=""}
 function title(){mode="title";$("cmd").innerHTML=Object.keys(SP).filter(k=>UNL[k]).map(k=>`<button onclick="start('${k}')">${SP[k].ev[0][1]} ${k}</button>`).join("");render()}
@@ -147,7 +147,7 @@ function cmds(){$("cmd").innerHTML=`<button onclick="act('a')">⚔️ Colpo</but
 function run(){mode="map";$("cmd").innerHTML="";say("Sei scappato.");render()}
 const A={esa:1,earm:0,eaura:0,eflash:0,sa:1,arm:0,flash:0,ex:0,px:0,ef:0,pf:0,sk:0,aura:0,pp:0,die:0,pdie:0,enter:1,fx:[],dm:[],proj:null};
 const EP=[440,314],PP=[200,314];
-function mkT(i){const o=TR[i],last=TR.length-1,k=i==0?"Drago":LV[lv].k(i),sg=i==0?Math.min(2,Math.max(lv,stg())):(i==1||i==2)?Math.max(0,stg()-1):stg();let hp=o.hp,at=o.at;if(i==last){hp=Math.round((70+S.bond*9)*(1+.25*lv));at=(9+S.bond*1.1)*(1+.2*lv)}return{...o,hp,mhp:hp,at,tr:i,k,sg,en:0,th:LV[lv].bg,boss:i==last,sty:i==0?"slash":["star","slash","bolt","slash","bolt","star","dark"][i],...(lv==2&&i==last?{n:k=="Luxy"?"Il Re della Luce":"Il Re dell'Oscurità",bs:k=="Luxy"?"L":"U"}:{})}}
+function mkT(i){const o=TR[i],last=TR.length-1,k=i==0?"Drago":LV[lv].k(i),sg=i==0?Math.min(2,Math.max(lv,stg())):(i==1||i==2)?Math.max(0,stg()-1):stg();let hp=o.hp,at=o.at;if(i==last){hp=[115,152,175][lv];at=[9.5,12.5,15.5][lv]}return{...o,hp,mhp:hp,at,tr:i,k,sg,en:0,th:LV[lv].bg,boss:i==last,sty:i==0?"slash":["star","slash","bolt","slash","bolt","star","dark"][i],...(lv==2&&i==last?{n:k=="Luxy"?"Il Re della Luce":"Il Re dell'Oscurità",bs:k=="Luxy"?"L":"U"}:{})}}
 function tw(k,a,b,ms,cb){const t=performance.now();(function f(){const p=Math.min(1,(performance.now()-t)/ms);A[k]=a+(b-a)*p;if(p<1)requestAnimationFrame(f);else if(cb)cb()})()}
 function fx(X,Y,n,col,sp){for(let i=0;i<n;i++){const a=Math.random()*6.3,v=(Math.random()+.3)*sp;A.fx.push({x:X,y:Y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:1,c:col})}}
 function hitE(d,big){tw("ef",1,0,450);tw("sk",big?16:7,0,380);A.dm.push({x:EP[0],y:EP[1]-70,t:"-"+d,l:1,c:"#fff"});fx(EP[0],EP[1],big?34:14,big?elc():"#ffd84a",big?9:6)}
@@ -166,8 +166,9 @@ function enemyTurn(){const bd=E.tr>=0&&E.en>=3;let d=r(E.at*(S.gd?.4:1)*(bd?2.2:
  if(bd){say(`⚡ ${E.n} attiva il Bond: ${ARN[E.k]}!`);tw("eaura",0,1,600,()=>{A.earm=1;tw("esa",1,0,400);tw("eflash",1,0,500);setTimeout(()=>{A.proj={c:EC[E.k],f:EP,t:PP};tw("pp",0,1,320,()=>{A.proj=null;done();setTimeout(()=>{A.earm=0;A.eaura=0;tw("esa",0,1,400);tw("eflash",1,0,400)},800)})},650)});return}
  if(st=="slash"||st=="lunge")tw("ex",0,-150,170,()=>{done();tw("ex",-150,0,260)});
  else{A.proj={c:{star:"#ffd84a",bolt:"#7fd8ff",dark:"#8a1fd0"}[st],f:EP,t:PP,z:st=="bolt"};tw("pp",0,1,320,()=>{A.proj=null;done()})}}
-function win(){const b=S.bond;say(`${E.n} è sconfitto!`);S.xp+=E.tr>=0?2:1;
- while(S.xp>=S.bond+2){S.xp-=S.bond+2;S.bond++;say(`✨ Il Legame sale al Lv.${S.bond}!`);const v=evo();if(v[2]>0&&b<v[2]&&S.bond>=v[2])say(`🌟 Evoluzione: ${v[0]}!`)}
+function win(){const b=S.bond;say(`${E.n} è sconfitto!`);if(S.bond<bondCap())S.xp+=E.tr>=0?2+lv:1;
+ while(S.bond<bondCap()&&S.xp>=xpNeed()){S.xp-=xpNeed();S.bond++;say(`✨ Il Legame sale al Lv.${S.bond}!`);const v=evo();if(v[2]>0&&b<v[2]&&S.bond>=v[2])say(`🌟 Evoluzione: ${v[0]}!`)}
+ if(S.bond>=bondCap()){S.xp=0;if(b<bondCap())say("🔒 Legame al massimo per questo regno (Lv."+bondCap()+"). Il prossimo regno alzerà il limite.")}
  checkSpiritTrophyUnlock();
  S.hp=Math.min(maxhp(),S.hp+15);S.pot=Math.min(4,S.pot+1);mode="map";$("cmd").innerHTML="";
  if(E.tr>=0){S.st=E.tr+1;if(S.st>=TR.length){if(lv<2){checkAreaTrophyUnlock();say("🌀 Area completata! Si apre il passaggio verso "+LV[lv+1].n+".");setLevel(lv+1);S.hp=maxhp();S.pot=Math.max(S.pot,3);say(lvIntro())}else{checkAreaTrophyUnlock();mode="end";say("🏆 "+E.n+" è sconfitto! Hai attraversato i tre domini. Sei il Campione del Legame!");$("cmd").innerHTML='<button onclick="title()">🔁 Nuova partita: scegli il tuo spirito</button>'}}}render()}
@@ -196,7 +197,7 @@ function render(){x.clearRect(0,0,640,448);if(mode=="end"){drawEnd();return}
   const vg=x.createRadialGradient(320,240,170,320,240,430);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,20,.5)");x.fillStyle=vg;x.fillRect(0,0,640,448);
   const pn=(X,Y,w,h)=>{x.fillStyle="#fffe";x.fillRect(X,Y,w,h);x.strokeStyle="#222";x.lineWidth=3;x.strokeRect(X,Y,w,h)};x.textAlign="left";
   pn(360,14,266,70);x.fillStyle="#111";x.font="bold 18px system-ui";x.fillText(E.n,372,36);x.font="12px system-ui";x.fillText(E.tr>=0?`con ${ALL[E.k].ev[E.sg][0]}   Bond ${"●".repeat(E.en)}${"○".repeat(3-E.en)}`:"Creatura selvatica",372,52);bar(372,60,242,E.hp,E.mhp,"#2e9d4f");
-  pn(14,14,266,96);x.fillStyle="#111";x.font="bold 18px system-ui";x.fillText(evo()[0]+" + Tu  Lv."+S.bond,26,36);x.font="13px system-ui";x.fillText(`PS ${Math.ceil(S.hp)}/${maxhp()}   Energia ${S.en}/3`,26,54);bar(26,62,242,S.hp,maxhp(),"#2e9d4f");bar(26,78,242,S.xp,S.bond+2,"#7a3cff");x.fillStyle="#555";x.font="11px system-ui";x.fillText("Legame",26,102);return}
+  pn(14,14,266,96);x.fillStyle="#111";x.font="bold 18px system-ui";x.fillText(evo()[0]+" + Tu  Lv."+S.bond,26,36);x.font="13px system-ui";x.fillText(`PS ${Math.ceil(S.hp)}/${maxhp()}   Energia ${S.en}/3`,26,54);bar(26,62,242,S.hp,maxhp(),"#2e9d4f");bar(26,78,242,S.bond>=bondCap()?1:S.xp,S.bond>=bondCap()?1:xpNeed(),"#7a3cff");x.fillStyle="#555";x.font="11px system-ui";x.fillText(S.bond>=bondCap()?"Legame MAX per questo regno (Lv."+bondCap()+")":"Legame",26,102);return}
  drawMap()}
 const PAL={p:{skin:"#ffdcb8",hair:"#7a5232",top:"#5a6490",acc:"#fff",pants:"#8a96c8",hat:"#555c80"},
 0:{skin:"#f6cfa5",hair:"#c0392b",top:"#1e8c8c",acc:"#fff",pants:"#334",hat:null},
